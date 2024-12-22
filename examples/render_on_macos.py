@@ -3,7 +3,7 @@ import argparse
 import torch
 
 import genesis as gs
-
+from time import time, sleep
 
 def main():
 
@@ -17,7 +17,6 @@ def main():
     ########################## create a scene ##########################
 
     scene = gs.Scene(
-        sim_options=gs.options.SimOptions(),
         viewer_options=gs.options.ViewerOptions(
             camera_pos=(3.5, 0.0, 2.5),
             camera_lookat=(0.0, 0.0, 0.5),
@@ -45,13 +44,12 @@ def main():
 
 
 def run_sim(scene, enable_vis):
-    from time import time
 
     t_prev = time()
     i = 0
     while True:
         i += 1
-
+        sleep(0.1)
         scene.step()
 
         t_now = time()
