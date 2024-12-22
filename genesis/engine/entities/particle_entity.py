@@ -2,6 +2,7 @@ import numpy as np
 import taichi as ti
 import torch
 from scipy.spatial import KDTree
+import platform
 
 import genesis as gs
 import genesis.utils.geom as gu
@@ -255,6 +256,13 @@ class ParticleEntity(Entity):
                 self._vverts = np.array([])
                 self._vfaces = np.array([])
 
+        # Platform-specific handling for MPS (Apple Silicon/Metal)
+        # if platform.system() == 'Darwin' and torch.backends.mps.is_available():
+        print("Using MPS for particles, converting to float32 for Apple Metal compatibility")
+        # Convert to float32 for Apple Metal compatibility
+        particles = particles.astype(np.float32)
+        origin = origin.astype(np.float32)
+        
         self._particles = particles.astype(gs.np_float)
         self._init_particles_offset = (gs.tensor(particles).contiguous() - gs.tensor(origin)).contiguous()
         self._n_particles = len(self._particles)
@@ -488,3 +496,32 @@ class ParticleEntity(Entity):
     @property
     def surface(self):
         return self._surface
+
+    def set_particles(self, positions):
+        """
+        Update particle positions for visualization
+        
+        Parameters
+        ----------
+        positions : np.ndarray
+            Array of shape (n_particles, 3) containing new particle positions
+        """
+        # Convert to float32 for Apple Metal compatibility
+        if platform.system() == 'Darwin' and torch.backends.mps.is_available():
+            positions = positions.astype(np.float32)
+            
+        # Update internal particle positions
+        self._particles = positions.astype(gs.np_float)
+        
+        # Update particle offset from origin
+        origin = np.zeros(3, dtype=positions.dtype)
+        self._init_particles_offset = (gs.tensor(positions).contiguous() - gs.tensor(origin)).contiguous()
+        
+        # Update number of particles
+        self._n_particles = len(positions)
+        
+        # Ensure particles are within solver boundary
+        if not self._solver.boundary.is_inside(positions):
+            gs.raise_exception(
+                f"Particles outside solver boundary. Note that for MPMSolver, boundary is slightly tighter than specified domain due to safety padding.\n\nCurrent boundary:\n{self._solver.boundary}\n\nParticles:\nmin: {positions.min(0)}\nmax: {positions.max(0)}\n"
+            )

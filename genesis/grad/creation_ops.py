@@ -83,6 +83,10 @@ def from_torch(torch_tensor, dtype=None, requires_grad=False, detach=True, scene
     else:
         gs.raise_exception("Supported dtype: [None, int, float]")
 
+    print("Using MPS for torch_tensor, converting to float32 for Apple Metal compatibility")
+    # Convert to float32 for Apple Metal compatibility
+    torch_tensor = torch_tensor.to(dtype=torch.float32)
+
     if torch_tensor.requires_grad and (not detach) and (not requires_grad):
         gs.logger.warning(
             "The parent torch tensor requires grad and detach is set to False. Ignoring requires_grad=False."
