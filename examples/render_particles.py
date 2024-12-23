@@ -32,7 +32,7 @@ def run_sim(scene, enable_vis):
         t_now = time()
         print(1 / (t_now - t_prev), "FPS")
         t_prev = t_now
-        sleep(0.001)  # Small delay to control simulation speed
+        sleep(0.0005)  # Small delay to control simulation speed
 
     if enable_vis:
         scene.viewer.stop()
